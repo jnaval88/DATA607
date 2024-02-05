@@ -1,0 +1,131 @@
+---
+title: "DATA607 Week 2 Assignment"
+author: "James Naval"
+output:
+  html_document:
+    df_print: paged
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(RCurl)
+library(RODBC)
+library(odbc)
+library(DBI)
+library(RSQLite)
+library(elo)
+```
+
+### Introduction
+
+For this assignment we were suppose to conduct a survey asking at least 5 people to rate the last 10 movies on a scale of 1-5. For this survey I asked 10 people which consist of some co-workers and friends to rate they most recent movies. After everyone complete the survey I record the result and upload. The results for the survey is available for download from either google.com or github.com using the link below:
+
+## Google: <https://docs.google.com/spreadsheets/d/13nVSyE9lhiyPPZTH_HYi9FNYIfYapg3x/edit#gid=45569196>
+## Github: <https://raw.githubusercontent.com/jnaval88/DATA607/main/Most_recent_Movies_Rating.csv.csv>
+
+The movies that were using for the survey were: Orion and the Dark, The Beekeeper, Night Swim, Lift, Justice League: Crisis on infinite Earth Part One, The Bricklayer, Badland Hunters, Mean Girls, Role Play and The Tiger's Apprentice. For this assignment I will use the R build in SQL database and store the table into memory.
+
+### Github Data Importing  into R
+
+```{r ImportingCSVfilefromGithub}
+
+fileUrl <- getURL('https://raw.githubusercontent.com/jnaval88/DATA607/main/Most_recent_Movies_Rating.csv.csv')
+Most_recent_Movies_Rating <- read.csv(text = fileUrl)
+Most_recent_Movies_Rating
+
+colnames(Most_recent_Movies_Rating)
+
+```
+
+### Creating SQL Database using Build SQL in R
+
+```{r loadingCSVfile to  SQLDatabase}
+
+con <- dbConnect(SQLite(), "memory")
+copy_to(con,Most_recent_Movies_Rating)
+
+```
+
+## Table into SQL using GetQuery
+
+```{r loading table from SQL QUERY}
+
+dbGetQuery(con,'
+SELECT *
+FROM Most_recent_Movies_Rating
+           ')
+
+```
+
+## Getting Survey score in Descending Order
+
+```{r Display SCORE Rating SQL}
+
+dbGetQuery(con, '
+SELECT SCORE, COUNT(SCORE)
+FROM Most_recent_Movies_Rating
+GROUP BY SCORE
+ORDER BY COUNT(SCORE) DESC
+           ')
+```
+
+### Display two Column from SQL using GetQuery
+
+```{r joining column}
+
+dbGetQuery(con, '
+SELECT Most_recent_Movies_Rating.SCORE, Most_recent_Movies_Rating.TITLE
+FROM Most_recent_Movies_Rating
+JOIN (SELECT SCORE, TITLE as opponent from Most_recent_Movies_Rating) B
+ON Most_recent_Movies_Rating.SCORE = b.SCORE
+ORDER BY Most_recent_Movies_Rating.SCORE DESC
+           
+           ')
+
+```
+
+```{sql, connection = con, output.var = "df"}
+
+SELECT Most_recent_Movies_Rating.SCORE, Most_recent_Movies_Rating.TITLE
+FROM Most_recent_Movies_Rating
+JOIN (SELECT SCORE, TITLE as opponent from Most_recent_Movies_Rating) B
+ON Most_recent_Movies_Rating.SCORE = b.SCORE
+ORDER BY Most_recent_Movies_Rating.SCORE DESC
+
+```
+
+### Creative SQL Query from dplyr
+
+```{rDPLYRSQL}
+
+Most_recent_Movies_Rating.db = tbl(con, "Most_recent_Movies_Rating")
+
+Most_recent_Movies_Rating_query <- Most_recent_Movies_Rating.db %>%
+select(SCORE, TITLE, MAIN_GENRE) %>%
+left_join(Most_recent_Movies_Rating.db %>% select(MAIN_GENRE, SCORE = TITLE))
+
+Most_recent_Movies_Rating_query %>% show_query()
+
+```
+### SQL QUERY from Dplyr
+
+```{sql, connection = con}
+
+SELECT
+  `Most_recent_Movies_Rating_LHS`.`SCORE` AS `SCORE`,
+  `Most_recent_Movies_Rating_LHS`.`TITLE` AS `TITLE`,
+  `Most_recent_Movies_Rating_LHS`.`MAIN_GENRE` AS `MAIN_GENRE`
+FROM `Most_recent_Movies_Rating` AS `Most_recent_Movies_Rating_LHS`
+LEFT JOIN `Most_recent_Movies_Rating` AS `Most_recent_Movies_Rating_RHS`
+  ON (
+    `Most_recent_Movies_Rating_LHS`.`SCORE` = `Most_recent_Movies_Rating_RHS`.`TITLE` AND
+    `Most_recent_Movies_Rating_LHS`.`MAIN_GENRE` = `Most_recent_Movies_Rating_RHS`.`MAIN_GENRE`
+  )
+
+```
+
+### Conclusion
+
+For this lab I took data from a survey that I conducted and inserted it in R build in  SQL database. Base on the rating we can that Orion and the Dark have the highest rating followed by the BeeKeeper then The Tiger's Apprentice.
