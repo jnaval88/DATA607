@@ -1,0 +1,57 @@
+---
+title: "DATA607 Week 1 Assignment"
+author: "James Naval"
+output:
+  html_document:
+    df_print: paged
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(RCurl)
+library(tidyverse)
+library(reactable)
+```
+
+### Introduction
+
+The article I chose from all the selection is Do Pulitzers Help Newspapers Keep Readers? The article talked about the economic challenges that newspaper is facing and wanted to see whether there was any relationship between the Pulitzer Prizes and a newspaper’s commercial success. The Pulitzers was concern about consumers gravitating toward news outlets that produce work of Pulitzer quality? Or are these newspapers struggling even more than others?
+
+below is the link to article in reference:
+https://fivethirtyeight.com/features/do-pulitzers-help-newspapers-keep-readers/
+
+### Analysis
+
+Load the data from the github repository provided on the article above.
+
+```{r load-data}
+x <- getURL('https://raw.githubusercontent.com/fivethirtyeight/data/master/pulitzer/pulitzer-circulation-data.csv')
+Pulitzer <- read.csv(text = x)
+```
+
+Giving a meaningful names to the column's
+
+```{r column-names}
+names(Pulitzer)=c("Newspaper", "Daily Circulation 2004", "Daily Circulation 2013", "Daily Circultion Ciruclation 2004-213", "Pulitzer Price Winners & Finalists 1990-2013", "Pulitzer Price Winners & Finalists 2004-2014", "Pulitzer Price Winners & Finalists 1990-2014")
+colnames(Pulitzer)
+```
+
+```{r Circulation score}
+Pulitzer <- mutate(Pulitzer, "Prize Winner and Finalists Score 1990-2013" = mean(Pulitzer$`Pulitzer Price Winners & Finalists 1990-2013`))
+Pulitzer <- mutate(Pulitzer, "Prize Winner and Finalists Score 2004-2014" = mean(Pulitzer$`Pulitzer Price Winners & Finalists 2004-2014`))
+Pulitzer <- mutate(Pulitzer, "Prize Winner and Finalists Score 1990-2014" = mean(Pulitzer$`Pulitzer Price Winners & Finalists 1990-2014`))
+
+Pulitzer <- mutate ( Pulitzer , "Average Prize Winner and Finalists Score 1990-2014"= rowMeans( select(Pulitzer ,"Prize Winner and Finalists Score 1990-2013" ,"Prize Winner and Finalists Score 2004-2014", "Prize Winner and Finalists Score 1990-2014"  ) ) ) 
+
+```
+
+To better visualize the data I will provide a table that display the score of Prize Winner and Finalists 1990-2014
+
+```{r Prize Winner and Finalists scores}
+reactable ( select(Pulitzer,"Newspaper","Average Prize Winner and Finalists Score 1990-2014"))
+```
+
+### Conclusion
+
+comparing the score for "Prize Winner and Finalists Score 1990-2013" vs "Prize Winner and Finalists Score 2004-2014" we noticed that there a drop on the reader which might indicate that reader weren't interested much in reading newspaper. Meanwhile for "Prize Winner and Finalists Score 1990-2014" there is a big increase on the reader for newspapers. We don't have much conclusive data that show which factor that causes the decrease and the increase.
+
