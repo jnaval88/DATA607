@@ -1,0 +1,101 @@
+---
+title: "DATA 607 Week 3 Assignment"
+author: "James Naval"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    df_print: paged
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(RCurl)
+library(reactable)
+```
+
+### Exercise 1
+
+#1. Using the 173 majors listed in fivethirtyeight.com’s College Majors dataset [https://fivethirtyeight.com/features/the-economic-guide-to-picking-a-college-major/], provide code that identifies the majors that contain either "DATA" or "STATISTICS"
+
+```{r Exercise 1}
+x <- getURL('https://raw.githubusercontent.com/fivethirtyeight/data/master/college-majors/majors-list.csv')
+collegeMajors <- read.csv(text = x)
+reactable(collegeMajors %>% filter(str_detect(collegeMajors$Major, pattern = "STATISTICS|DATA")))
+```
+
+### Exercise 2
+
+#2 PLEASE SEE HINT/CLARIFICATION AFTER #4 BELOW. Write code that transforms the data below:
+
+[1] "bell pepper"   "bilberry"   "blackberry"   "blood orange"
+
+[5] "blueberry"   "cantaloupe"   "chili pepper"   "cloudberry"  
+
+[9] "elderberry"   "lime"   "lychee"   "mulberry"    
+
+[13] "olive"   "salal berry"
+
+Into a format like this:
+
+c("bell pepper", "bilberry", "blackberry", "blood orange", "blueberry", "cantaloupe", "chili pepper", "cloudberry", "elderberry", "lime", "lychee", "mulberry", "olive", "salal berry")
+
+### Clarification for #2.
+Think of your task here as to write regex to transform input string strIn into output string strOut!
+
+strIn =
+'[1] "bell pepper"  "bilberry"     "blackberry"   "blood orange"
+[5] "blueberry"    "cantaloupe"   "chili pepper" "cloudberry"  
+[9] "elderberry"   "lime"         "lychee"       "mulberry"    
+[13] "olive"        "salal berry"'
+
+>-->>
+
+strOut =
+
+'c("bell pepper", "bilberry", "blackberry", "blood orange", "blueberry", "cantaloupe", "chili pepper", "cloudberry", "elderberry", "lime", "lychee", "mulberry", "olive", "salal berry")'
+
+```{r Exercise 2}
+String <- " \"bell pepper\"  \"bilberry\"     \"blackberry\"   \"blood orange\"
+
+\"blueberry\"    \"cantaloupe\"   \"chili pepper\" \"cloudberry\"  
+
+\"elderberry\"   \"lime\"         \"lychee\"       \"mulberry\"    
+
+\"olive\"        \"salal berry\""
+
+String<- unlist(str_extract_all(String, pattern = "[a-z]+[:space:]?[a-z]*") )
+String
+```
+
+### Exercise 3
+
+#3 Describe, in words, what these expressions will match:
+
+(.)\1\1   This expression will match any character except line break, followed by the same character twice more.
+
+"(.)(.)\\2\\1"   This expression will match a double quote, followed by any character followed by any other character except line break, followed by the second character, followed by the first character, followed by a double quote.
+
+(..)\1  This expression will match any two characters, excluding newlines,followed by the same two characters.
+
+"(.).\\1.\\1"   This expression will match an expression that contains a double quotation mark followed by any character, excluding newlines, followed by any character, followed by the first character, followed by any character,excluding new lines, followed by the first character, followed by a double quotation mark.
+
+"(.)(.)(.).*\\3\\2\\1"   This expression will match any expression containing a double quotation mark, followed by any 3 characters (excluding new lines), followed by 0 more characters, followed by the 3rd characer, the 2nd character and the first character, followed by a double quotation mark.
+
+### Exercise 4
+
+#4 Construct regular expressions to match words that:
+
+Start and end with the same character.
+
+Ans. \^(.).\*\\\\1$| \^( .)$
+
+Contain a repeated pair of letters (e.g. "church" contains "ch" repeated twice.)
+
+Ans. ([:alpha:][:alpha:]).\*\\\\1
+
+Contain one letter repeated in at least three places (e.g. "eleven" contains three "e"s.)
+
+Ans. ([:alpha:]).*\\1.*\\\\1
+
+<end of assignment>
