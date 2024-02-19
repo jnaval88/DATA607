@@ -1,0 +1,76 @@
+---
+title: "DATA 607 Project 1"
+author: "James Naval"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(reactable)
+```
+
+### Introduction
+
+For this project we were provided with a chess cross table file and were asking to imported the .txt chess cross table file to R and clean it then convert to a .csv file. I will upload the chess cross table file to my github account so that he can be easily view. There are different way for import .txt file to R such as read.delim, read.fwf. I will be using read.fwf to clean the data then converted it to .csv. For the assignment we were asked to analyzed a file into a format that contains the Player's Name, Player's State, Total Number of Points, Player's Pre-Rating, and Average Pre Chess Rating of Opponents. 
+
+### Loading Data File
+```{r data load}
+ChessFinalResults <-('https://raw.githubusercontent.com/jnaval88/DATA607/main/Project%201/tournamentinfo.txt')
+
+colNames <- c("PairNum","PlayerName","TotalPoints","Round1","Round2","Round3","Round4","Round5","Round6","Round7","State","USCFID","PreRating","PostRating","TotalPointsL2","Round1L2","Round2L2","Round3L2","Round4L2","Round5L2","Round6L2","Round7L2")
+
+colClasses <- c("factor", "character", "numeric", "character", "character", "character", "character", "character", "character", "character", "factor", "integer", "character","character", "character", "character", "character", "character", "character", "character", "character", "character" )
+
+ChessFinal <- read.fwf(ChessFinalResults, width = list( c(6,-1,33,-1,5,-1,5,-1,5,-1,5,-1,5,-1,5,-1,5,-1,5,-1), c(6,-1,10,-4, 8,-2,9,-1,5,-1,5,-1,5,-1,5,-1,5,-1,5,-1,5,-1,5,-1),c(-89))  , skip =4, strip.white=TRUE, col.names = colNames, colClasses= colClasses )
+
+#Reorder the Rows of the DataTable
+ChessFinal <- ChessFinal %>% select("PairNum", "PlayerName","State",starts_with("TotalPoints"),"PreRating","PostRating","USCFID", starts_with("R"))
+
+print(ChessFinal)
+```
+
+### Irrelevant Informations
+
+If we take a look at the data, we noticed that some columns from the data sets have unused or irrelevant details that not need for the purpose of this assignment. looking at column Total Points up to column Round 7 there are two sets of data which I refer to as Line 2. Since Line 2 of these column is irrelevant for this assignment therefore I will eliminating them. 
+
+```{r Removing the RnL2 Data from table}
+ChessFinal <- ChessFinal%>% select (everything(), -matches("^Round\\dL2$") , -"TotalPointsL2", -"PostRating" , -"USCFID")
+```
+
+### Outcome Removal
+
+I will now remove the outcome from the table then set it as factor.
+
+```{r remove-outcomes}
+ChessFinal<-ChessFinal %>% mutate_at( vars( matches("^Round\\d$")) ,~str_extract( . ,"[:digit:]+") )
+ChessFinal<-ChessFinal %>% mutate_at( vars( matches("^Round\\d$")) , ~as.factor(.) )
+```
+
+### Pre-Rating
+
+As we can see that some of the player pre-rating also include some other P data, this step will cleanup the pre-rating data and remove other data from the pre-rating.
+
+```{r cleanup-pre-rating}
+ChessFinal<-ChessFinal %>% mutate(  PreRating = str_extract(PreRating ,"[:digit:]+") )
+ChessFinal<-ChessFinal %>% mutate( PreRating =  as.integer(PreRating) )
+
+reactable(ChessFinal)
+```
+
+```{r Computing the Average}
+ChessFinal <- ChessFinal %>% mutate(NumberOfGames = rowSums(!is.na(select(ChessFinal,matches("^Round\\d$")))))
+
+ChessFinal$OpponentSum <- apply(select ( ChessFinal,matches("^Round\\d$") ), 1, function(x){sum(ChessFinal$PreRating[match(x,ChessFinal$PairNum)] , na.rm = TRUE) } )
+
+ChessFinal <- ChessFinal %>% mutate ( AverageOpponentRating = round(OpponentSum / NumberOfGames, digits = 0) )
+
+reactable( select (ChessFinal, -matches("^Round\\d$") , -"NumberOfGames", -"OpponentSum" ))
+```
+
+## Export as CSV
+The following command will export the data frame above to a csv, I am using the relative path this will save in the working directory of my R environment. 
+```{r export-csv}
+write.table(ChessFinal,sep = ",", file = "tournamentinfo.csv", row.names = FALSE, col.names = c("PairNum","PlayerName","State","TotalPoints","Pre-Rating","Round1","Round2","Round3","Round4","Round5","Round6","Round7","NumberOfGames","OpponentSum", "AverageOpponentRating"))
+
+reactable(ChessFinal)
+```
