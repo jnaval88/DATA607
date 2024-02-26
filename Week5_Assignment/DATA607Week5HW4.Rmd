@@ -1,0 +1,88 @@
+---
+title: "Week5 Assignment"
+author: "James Naval"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(reactable)
+library(grid)
+library(gridExtra)
+library(EBImage)
+```
+
+### Introduction
+
+We were provided with an image, and we were asked to import it to R and convert it. Then create a csv file from it and post it to my Github account. An URL for my Github data is below along with the original image.
+
+[github](https://raw.githubusercontent.com/jnaval88/DATA607/main/Week5_Assignment/AirlineData.csv).
+
+![](data_image.png)
+
+## Import Data into R from the CSV
+
+For this step I will be importing  my csv data from my Github account into my R studio, then print the output
+
+```{r}
+filedata <- ("https://raw.githubusercontent.com/jnaval88/DATA607/main/Week5_Assignment/AirlineData.csv")
+airlineData <- read_csv(filedata)
+
+reactable(airlineData)
+```
+
+### Tidy Data
+
+For this part I will create three new columns, One column to display the city of where the flights are coming from or going to. Then the other two columns will display flight status whether it's delayed or on time. If we take a look at the previous format from the image provided the name of the city where on different row which now is under one column name city.
+
+```{r tidy-data}
+airlineTidy <- airlineData %>% 
+  rename(Airline = AIRLINE)
+
+airlineTidy <- airlineTidy %>% 
+  gather( key = "City",value = "Number Of Flights", 3:7, factor_key = TRUE)
+
+airlineTidy <- airlineTidy %>% 
+  spread(key = Status,value = "Number Of Flights")
+
+airlineTidy <- airlineTidy %>% 
+  mutate(totalFlights = delayed + `on time` , PropOnTime = `on time`/totalFlights)
+
+reactable(airlineTidy)
+```
+
+### Analysis
+
+This section is simply display the proportion of flights that are on time base on the Airline and cities.
+
+```{r Flight-Status}
+airlineTidy %>% 
+  select(City, Airline, PropOnTime) %>% 
+  arrange(desc(PropOnTime), City ) %>% 
+  reactable()
+```
+
+### Graph 
+
+This is just a graph that just show on time flight by city and by proportion.
+
+```{r }
+Data_plot_1 <-airlineTidy %>% 
+  ggplot(aes(x=City,y=`on time`,color=Airline)) + geom_point() + ggtitle("City vs Number of On-Time Flights (Plot_1)")
+data_plot_2 <- airlineTidy %>% 
+  ggplot(aes(x=City,y=PropOnTime,color=Airline)) + geom_point() + ggtitle("City vs Proportion of Flights On Time (Plot_2)")
+
+grid.arrange(Data_plot_1,data_plot_2, nrow= 2)
+```
+
+### Conclusion
+
+The table below shows the proportion of on time flight by city. In summary we can conclude that ALASKA Airline have the highest Proportion of on time flight by cities and the most on time flight city for Alaska Airline is Phoenix. While, AM West have the most on time flight which is orginate in Phoenix as well.
+
+```{r }
+airlineTidy %>% 
+  group_by(City, Airline) %>% 
+  summarise( propOnTimeByCity = `on time`/totalFlights, totalFlights, .groups = "keep") %>% 
+  arrange(desc(propOnTimeByCity) ) %>% 
+  reactable()
+```
