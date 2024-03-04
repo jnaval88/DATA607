@@ -1,0 +1,311 @@
+---
+title: "Project 2"
+author: "James Naval"
+output:
+  html_document:
+    df_print: paged
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(DT)
+library(tidyverse)
+library(stringi)
+library(stringr)
+```
+
+### Introduction 
+
+In this project we have been asked to find three untidy data sets which consist of Two classmates data set and one of your choosing, I will then need to tidy these data sets and perform some analysis on them. These data sets should be available as CSV files, preferably in a wide data format. 
+
+### DataSet 1 - Voters Registers by County 02/27/2024
+
+For the first data I will be analyzing my own data set and my data set is about New York State voter registration, I will be analyzing New York Sate voter registration enrollment by county as of February 27, 2024 by tidying it and produce some graph to show any relationship. That data can be found from the [New York State Board of Elections Website] (https://elections.ny.gov/enrollment-county). During the tidiness of the data set I will be removing not needed rows/columns, I will start by removing the first few rows that had a title and information about the data. The process involve imported my excel data set as a csv file then upload it to [Github], which can be found from this URL(https://raw.githubusercontent.com/jnaval88/DATA607/main/Proejct%202/DATASET1/county_feb24-revised.csv). I load the data set to R Studio then na.omit to remove any missing data or N/A data from the data set.
+
+```{r dataset-1-import, message=FALSE}
+voterEnrollmentByCounty_NA <- read_csv('https://raw.githubusercontent.com/jnaval88/DATA607/main/Proejct%202/DATASET1/county_feb24-revised.csv' ) 
+```
+
+Data set display with missing values or N/A values.
+
+```{r Data-1-display}
+datatable(voterEnrollmentByCounty_NA)
+```
+
+Cleaning the data set by removing NA values, then display.
+
+```{r}
+voterEnrollmentByCounty_2024 <- voterEnrollmentByCounty_NA %>% na.omit()
+
+datatable(voterEnrollmentByCounty_2024)
+```
+
+### Tidy Data
+
+For this step I will put the data set into a tidy format for a better generalized standard use, in order to do that I will be using pivot_longer and pivot_wider.
+
+```{r dataset-1-cleaning}
+voterEnrollmentByCounty_2024 <-
+  voterEnrollmentByCounty_2024 %>% 
+  pivot_longer('DEM':'BLANK',names_to = "Party", values_to = "Number of Voters") %>% 
+  pivot_wider(-TOTAL,names_from = STATUS, values_from = 'Number of Voters')
+
+datatable(voterEnrollmentByCounty_2024) 
+```
+
+### Data Transformation
+
+After I finished putting the data in a standardize tidy format now I will create two new columns by mutation. These new columns will show the proportion of each party voters present by county, then I want to reintroduce this column by utilizing the inner_join function in a newly created data table to compute this number using the organized data.
+
+```{r dataset-1-transform}
+totalVotersByCounty <- voterEnrollmentByCounty_2024 %>% 
+  group_by(COUNTY) %>% 
+  summarise(Total_Voters = sum(Active+Inactive))
+voterEnrollmentByCounty_2024 <- inner_join( voterEnrollmentByCounty_2024, totalVotersByCounty, by = "COUNTY") 
+```
+
+This is will calculate the proportions of voters in two different ways, first I will calculate the active proportion of voters by county, secondly it will calculate the inactive proportion of voters by county. After I finish calculating both proportions of voters, I will calculate the total of proportions by the active with the inactive.
+
+```{r dataset-1-proportions-calculations}
+voterEnrollmentByCounty_2024 <- voterEnrollmentByCounty_2024 %>% 
+  mutate( Active_Prop = round(Active/Total_Voters,2) , Inactive_Prop = round(Inactive/Total_Voters,2) , Total_Prop = round(Total/Total_Voters,2) )
+```
+
+This will create subset value 
+
+```{r dataset-1-subset}
+voterEnrollmentByCounty_2024Subset <-
+  voterEnrollmentByCounty_2024 %>% 
+  select( REGION, COUNTY, Party, Total_Prop )
+
+datatable(voterEnrollmentByCounty_2024Subset)
+```
+
+### Different Graph
+
+This bar graph below show total voters by different party and are color coded by party.
+
+```{r}
+ggplot(voterEnrollmentByCounty_2024, aes(x = Party, color = Party, fill = Party)) + geom_bar() +
+  xlab("Party") + ylab("Total Voters") +
+  ggtitle("Number of Votes by County in New York State")
+```
+
+This is a point graph that show total voters by party.
+```{r}
+ggplot(voterEnrollmentByCounty_2024, aes(Party, Total_Voters, color = Party)) + geom_point() +
+	xlab("Party") + ylab("Total Voters") +
+	ggtitle("Number of votes by county in New York State")
+```
+
+This boxplot show Total Proportions of voters by party.
+
+```{r dataset-1-boxplot}
+ggplot(voterEnrollmentByCounty_2024Subset, aes( x = Party , y = Total_Prop, color = Party )) +
+  geom_boxplot(outlier.size=2,outlier.colour="red", notch = TRUE) 
+```
+
+### Correlation Between Total Voters and Active Voters
+
+This is a correlation test to see if there is any connection between active voters and party.
+```{r}
+cor.test(voterEnrollmentByCounty_2024$Total_Voters, voterEnrollmentByCounty_2024$Active)
+```
+
+### Correlation Between Total Voters and Inactive Voters
+
+This is a correlation test to see if there is any connection between inactive voters and party.
+```{r}
+cor.test(voterEnrollmentByCounty_2024$Total_Voters, voterEnrollmentByCounty_2024$Inactive)
+```
+
+### Conclusion
+
+By looking a the graph along with the total proportion of active voters we can conclude that New York counties doesn't seem to lean toward DEM party eventhough it always seem to look that way. Most of the other counties lean more toward other parties witht he exception of Kings and queens. 
+
+
+### DATASET 2: Marriage Rates in the US
+
+For my second data set, I will analyze Marriage Rates in the US, this was posted by my classmate Brandon Cunningham, he posted a two links of the data, one raw data from CDC and the other from ourworldindata.org. For the purpose of this project I will be using the raw data from CDC to perform my tidiness and analysis. In order for me to be able to analyzed my classmate data I need to download the data which I download from the CDC link provided by my classmate.I took my classmate data and upload it to my [Github] which can be view from this URL 
+
+
+```{r dataset-2-import, message=FALSE}
+Marriage_Rates_US <- read_csv('https://raw.githubusercontent.com/jnaval88/DATA607/main/Proejct%202/DATASET2/ACSST1Y2022.S1201-2024-02-20T191328.csv') %>% na.omit()
+```
+
+This display the current data
+```{r dataset-2-display}
+datatable(head(Marriage_Rates_US))
+```
+
+### Tidy data
+
+This part clean the data by making the columns name shorter and changing them. As per the previous data contains very long names with special characters.
+
+```{r renaming-columns}
+# Columns renaming by changing the name to a shorter name
+ names(Marriage_Rates_US)[names(Marriage_Rates_US) == "United States!!Total!!Estimate"] <- "Total_Estimate"
+names(Marriage_Rates_US)[names(Marriage_Rates_US) == "United States!!Total!!Margin of Error"] <- "Total_Margin_Error"
+names(Marriage_Rates_US)[names(Marriage_Rates_US) == "United States!!Now married (except separated)!!Estimate"] <- "Now_married_Estimate"
+names(Marriage_Rates_US)[names(Marriage_Rates_US) == "United States!!Now married (except separated)!!Margin of Error"] <- "Now_married_Margin_Error"
+names(Marriage_Rates_US)[names(Marriage_Rates_US) == "United States!!Widowed!!Estimate"] <- "Windowed_Estimate"
+names(Marriage_Rates_US)[names(Marriage_Rates_US) == "United States!!Widowed!!Margin of Error"] <- "Windowed_Margin_Error"
+names(Marriage_Rates_US)[names(Marriage_Rates_US) == "United States!!Divorced!!Estimate"] <- "Divorced_Estimate"
+names(Marriage_Rates_US)[names(Marriage_Rates_US) == "United States!!Divorced!!Margin of Error"] <- "Divorced_Marriage_Error"
+names(Marriage_Rates_US)[names(Marriage_Rates_US) == "United States!!Separated!!Estimate"] <- "Seperated_Estimate"
+names(Marriage_Rates_US)[names(Marriage_Rates_US) == "United States!!Separated!!Margin of Error"] <- "Seperated_Margin_Error"
+names(Marriage_Rates_US)[names(Marriage_Rates_US) == "United States!!Never married!!Estimate"] <- "Never_married_Estimate"
+names(Marriage_Rates_US)[names(Marriage_Rates_US) == "United States!!Never married!!Margin of Error"] <- "Never_married_Margin_Error"
+
+
+```
+
+This remove the percent symbol from the dataset and convert that columns to numeric.
+
+```{r dataset-3-transform-restore-totalvoters}
+# removing the % sign from the dataset
+Marriage_Rates_US$Now_married_Estimate = as.numeric(gsub("\\%", "", Marriage_Rates_US$Now_married_Estimate)) 
+Marriage_Rates_US$Windowed_Estimate = as.numeric(gsub("\\%", "", Marriage_Rates_US$Windowed_Estimate))
+Marriage_Rates_US$Divorced_Estimate = as.numeric(gsub("\\%", "", Marriage_Rates_US$Divorced_Estimate,))
+Marriage_Rates_US$Seperated_Estimate = as.numeric(gsub("\\%", "", Marriage_Rates_US$Seperated_Estimate))
+Marriage_Rates_US$Never_married_Estimate = as.numeric(gsub("\\%", "", Marriage_Rates_US$Never_married_Estimate))
+```
+
+In the dataset all the columns name with Margin Error have my symbol, in order for me to be able to utilizing those columns I tidy them by removing them.
+```{r}
+Marriage_Rates_US <- Marriage_Rates_US %>% mutate( Total_Margin_Error = str_replace(str_extract(Total_Margin_Error,"\\d+\\D\\d+"),",",""))
+Marriage_Rates_US <- Marriage_Rates_US |> mutate( Total_Estimate = str_replace(str_extract(Total_Estimate,"\\d+\\D\\d+"),",",""))
+Marriage_Rates_US <- Marriage_Rates_US %>% mutate( Now_married_Margin_Error = str_replace(str_extract(Now_married_Margin_Error,"\\d+\\D\\d+"),",",""))
+Marriage_Rates_US <- Marriage_Rates_US %>% mutate( Windowed_Margin_Error = str_replace(str_extract(Windowed_Margin_Error,"\\d+\\D\\d+"),",",""))
+Marriage_Rates_US <- Marriage_Rates_US %>% mutate( Divorced_Marriage_Error = str_replace(str_extract(Divorced_Marriage_Error,"\\d+\\D\\d+"),",",""))
+Marriage_Rates_US <- Marriage_Rates_US %>% mutate( Never_married_Margin_Error = str_replace(str_extract(Never_married_Margin_Error,"\\d+\\D\\d+"),",",""))
+Marriage_Rates_US <- Marriage_Rates_US %>% mutate( Seperated_Margin_Error = str_replace(str_extract(Seperated_Margin_Error,"\\d+\\D\\d+"),",",""))
+```
+
+This display the dataset with names changing, special characters, 
+```{r New-Dataset-display }
+datatable(head(Marriage_Rates_US))
+```
+This re-arrange the column then I performed pivot_longer to the part of the dataset I will be using.
+
+```{r dataset-2-cleaning}
+# re-arranging the column
+Marriage_Rates_US_new <- Marriage_Rates_US[, c(1, 2, 4, 6, 8, 10, 12, 3, 5, 7, 9, 11, 13)]
+
+Marriage_Rates_US_new <-
+  Marriage_Rates_US_new %>% 
+  pivot_longer('Now_married_Estimate':'Never_married_Estimate', names_to = "Married_Status", values_to = "Percentage_of_Estimate")
+
+datatable(Marriage_Rates_US_new) 
+```
+
+### Data Analysis
+
+```{r}
+ggplot(Marriage_Rates_US_new, aes(y = Total_Estimate, x = Percentage_of_Estimate)) +
+  geom_boxplot()
+
+```
+
+### DATASET 3: GDP by Country by Year
+
+For my third I choose GDP by Country by Year will I will be analyzing, and this data was obtained from {worldbank] (https://data.worldbank.org/indicator/NY.GDP.MKTP.KD.ZG?most_recent_year_desc=true). I upload this dataset to my Github account which can be found in this URL. (https://raw.githubusercontent.com/jnaval88/DATA607/main/Proejct%202/DATASET3/GDP-Percent-Growth-by-Country-by-Year.csv)
+
+```{r dataset-3-import, message=FALSE}
+gdpByCountryByYear <- read_csv('https://raw.githubusercontent.com/jnaval88/DATA607/main/Proejct%202/DATASET3/GDP-Percent-Growth-by-Country-by-Year.csv')
+```
+
+Data display
+
+```{r dataset-3-display- before any tidying}
+datatable(head(gdpByCountryByYear))
+```
+
+### Data cleaning
+
+I will now format the data neatly using the pivot_longer function. Furthermore, I will only take into account New York State schools for the purposes of this assignment, and I will utilize the filter function to only show these.
+
+```{r dataset-3-cleaning}
+gdpByCountryByYear <- 
+  gdpByCountryByYear %>% 
+  pivot_longer('1960':'2019',names_to = "year", values_to = "GDP Growth Percent") %>% 
+  select ( -starts_with('Indicator'))
+
+datatable(head(gdpByCountryByYear, n= 100L) ) 
+```
+
+### Analyzis
+
+Having organized the data, I will now conduct some analysis on it. Using the group_by function to group the data by country and the summarise function to extract the relevant statistics, I will start by reviewing some summary statistics for the data. In order to move the nations with the greatest average growth rates to the top of the new data frame, I will also utilize the {arrange} function.
+
+```{r dataset-3-analysis}
+StatsGDPbyCounty <- gdpByCountryByYear %>% 
+  group_by(`Country Name`) %>% 
+  summarise(mean = round(mean(`GDP Growth Percent`,na.rm=T),2), sd = round(sd(`GDP Growth Percent`,na.rm=T),2) , sum = round(sum(`GDP Growth Percent`,na.rm=T),2)) %>% 
+  arrange(desc(mean))
+
+datatable(StatsGDPbyCounty)
+```
+
+### Graph
+
+This 
+```{r}
+# mean Graph
+ggplot(StatsGDPbyCounty, aes(x =mean)) +
+  geom_histogram( na.rm = T) + 
+  geom_vline(xintercept =  mean(StatsGDPbyCounty$mean, na.rm = T) , col = "red", size = 1.5) +
+  ggtitle("StatsGDPbyCounty") 
+
+#sum Graph
+ggplot(StatsGDPbyCounty, aes(x =sum)) +
+  geom_histogram( na.rm = T) + 
+  geom_vline(xintercept =  sum(StatsGDPbyCounty$sum, na.rm = T) , col = "red", size = 1.5) +
+  ggtitle("StatsGDPbyCounty") 
+
+#SD Graph
+ggplot(StatsGDPbyCounty, aes(x =sd)) +
+  geom_histogram( na.rm = T) + 
+  geom_vline(xintercept =  sd(StatsGDPbyCounty$sd,na.rm = T) , col = "red", size = 1.5) +
+  ggtitle("StatsGDPbyCounty") 
+
+```
+
+## Corelation test
+
+```{r}
+cor.test(StatsGDPbyCounty$sd, StatsGDPbyCounty$mean)
+```
+
+## Log transformation
+```{r, echo = FALSE}
+ggplot(StatsGDPbyCounty, aes(sd, mean)) + geom_point() +
+	scale_x_log10() + scale_y_log10() +
+	xlab("mean") + ylab("sd") +
+	ggtitle("GDP by country")
+```
+
+## Linear Regression
+```{r}
+model1 <- lm(sd ~ mean, data = StatsGDPbyCounty)
+summary(model1)
+```
+
+## Linear Regression Model (log transform)
+```{r}
+model2 <- lm(log(sd) ~ log(mean), data = StatsGDPbyCounty)
+summary(model2)
+```
+
+## Conclusion
+I ran multiple analysis to see which country have the highest gdp, and I also test to see if there is a correlation between the mean and the country gpd. After performing these test it seems that Equatorial Guinea rank number 1 as the country with the highest average increase in GDP from 1960-2019, follow by Bosnia and Herzegovina. Before running these analysis my assumption was never about either this two countries.
+
+### Works Cited
+
+Enrollment by county. (2024, February 27). Retrieved February 28th, 2024, from https://www.elections.ny.gov/EnrollmentCounty.html 
+
+Marriage Rates in US:
+Data Source:https://data.census.gov/table/ACSST1Y2022.S1201?q=family&t=Families%20and%20Living%20Arrangements
+
+GDP by Country by Year:
+https://data.worldbank.org/indicator/NY.GDP.MKTP.KD.ZG?most_recent_year_desc=true
