@@ -1,0 +1,42 @@
+<?xml version="1.0"?>
+<books>
+
+<book1>    
+     
+<Title>Operating System Concepts</Title>
+<Edition>9th Edition</Edition>
+<Author1>Abraham Silberschatz</Author1>
+<Author2>Peter B. Galvin</Author2>
+<Author3>Greg Gagne</Author3>
+<Publisher>Wiley</Publisher>
+<PublicationDate>December 17, 2012</PublicationDate>
+<ISBN-13>978-1118063330</ISBN-13>
+<Language>English</Language>
+ </book1> 
+ 
+	<book2>
+
+    <Title>Rich Dad Poor Dad: What the Rich Teach Their Kids About Money That the Poor and Middle Class Do Not!</Title>
+    <Edition>Second</Edition>
+	<Author1>Robert T. Kiyosaki</Author1>
+    <Publisher>Plata Publishing</Publisher>
+	<PublicationDate>April 5, 2022</PublicationDate>
+    <ISBN-13>78-1612680194</ISBN-13>
+    <Language>English</Language>
+</book2>
+
+   <book3>
+   
+    <Title>Practical Programming: An Introduction to Computer Science Using Python 3</Title>
+    <Author1>Paul Gries</Author1>
+	<Author2>Jennifer Campbell</Author2>
+	<Author3>Jason Montojo</Author3>
+    <Edition>Second</Edition>
+	<Publisher>Pragmatic Bookshelf</Publisher>
+	<PublicationDate>September, 2013</PublicationDate>
+    <ISBN-13>978-1-93778-545-1</ISBN-13>
+    <Language>English</Language>
+  
+   </book3>
+   
+</books>
