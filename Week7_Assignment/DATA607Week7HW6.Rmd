@@ -1,0 +1,67 @@
+---
+title: "Week 7 Assignment"
+author: "James Naval"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(RCurl)
+library(XML)
+library(DT)
+library(methods)
+library(rvest)
+library(jsonlite)
+library(htmltools)
+```
+
+### Introduction
+
+For this assignment we have been asked to store information about three books, at least one of which has more than one author, into an XML file, an HTML table and a JSON file. For this assignment I have chosen the following three books "Operating System Concepts by Abraham Silberschatz, Peter B. Galvin and Greg Gagne", "Rich Dad Poor Dad: What the Rich Teach Their Kids About Money That the Poor and Middle Class Do Not! by Robert T. Kiyosaki" and "Practical Programming: An Introduction to Computer Science Using Python 3 by Paul Gries,Jennifer Campbell and Jason Montojo". The table analysis shows similar attributes all three books. 
+
+
+### Read HTML File Format
+I have upload the books.html file data into my Github account and the link to my github is provide below. 
+[github](https://raw.githubusercontent.com/jnaval88/DATA607/main/Week7_Assignment/books.html). The code below will import my HTML file table into R and load the data
+```{r html.import}
+## HTML file table Importing
+html.url<- "https://raw.githubusercontent.com/jnaval88/DATA607/main/Week7_Assignment/books.html"
+html.raw <- read_html(html.url)
+```
+
+This will create a table to R from HTML file that imported and load.
+```{r html.table.to.dataframe}
+## Table creating from loading file
+TablesFromHTML<- html.raw %>%  html_table(fill = T,header = T, trim = T)
+books.fromHTML <- TablesFromHTML[[1]] 
+ datatable(books.fromHTML)
+```
+
+## Read XML File Format
+I have upload the books.xml file data into my Github account and the link is provided below. [github](https://raw.githubusercontent.com/jnaval88/DATA607/main/Week7_Assignment/books.xml). I will now import the file using the XML library, which has been previously loaded.
+```{r xml.import}
+## XML file Importing
+xml.url<- "https://raw.githubusercontent.com/jnaval88/DATA607/main/Week7_Assignment/books.xml"
+xml.raw <- xmlParse(getURL(xml.url))
+```
+
+I will now use the `xmlToDataFrame` to convert my file to an R DataFrame. 
+```{r xml.root}
+## Creating table from importing file
+books.fromXML <- xmlToDataFrame(xml.raw)
+ 
+datatable(books.fromXML) 
+```
+
+## Read JSON Format
+I have upload the .JSON file data into my github account and the link for my github with the .JSON file is provided below. [github](https://raw.githubusercontent.com/jnaval88/DATA607/main/Week7_Assignment/books.json). In my file I stored the information about the three books in a JSON array. I will use the `fromJSON` function from the `jsonlite` package to parse the file.
+```{r json.import}
+json.url<- "https://raw.githubusercontent.com/jnaval88/DATA607/main/Week7_Assignment/books.json"
+json.raw <- jsonlite::fromJSON(getURL(json.url))
+books.fromJSON <- json.raw$books 
+ 
+datatable(books.fromJSON)
+```
+
+### Conclusion
+For this assignment my concerned was with JSON, XML and HTML  files Tables, we were asked to used these three options to obtain data in R. I had to create these tables manually, The creating format for .HTML, .XML and .JSON were different but the outcome of all three tables were equal with no differences.
