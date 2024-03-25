@@ -1,0 +1,92 @@
+---
+title: "Week 9 Assignment"
+author: "James Naval"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(keyring)
+library(tidyverse)
+library(jsonlite)
+library(DT)
+```
+
+## Introduction {.tabset}
+
+In this assignment we have been asked to use the [New York Times Developer API](https://developer.nytimes.com/) to obtain information and pull it into a R data frame. 
+
+### Using the MOST Popular API
+
+For the first example I will use the MOST POPULAR API, to load the most shared articles by facebook.
+
+```{r get-data-using-Most-Popular-api}
+
+url <- paste("https://api.nytimes.com/svc/mostpopular/v2/shared/1/facebook.json?api-key=8Tuw2G2y7TwdrHs4sejvtQWjJ2E844o5")
+
+rawDataFromMostPopularApi <- fromJSON(url,flatten = T)
+resultsDataFramemostpopular <- rawDataFromMostPopularApi$results
+
+resultsDataFramemostpopular %>% 
+  select(title, section, source,  abstract, type, byline, adx_keywords, published_date,updated) %>% 
+  datatable()
+
+```
+
+### Display Results Graphically for Most Popular API
+
+I will now make a bar graph showing the number of popular articles per section.
+```{r ggplot-section}
+resultsDataFramemostpopular %>% ggplot(aes(x=section, fill = section)) + geom_bar()
+```
+
+### Using the Top Stories API per Science
+
+For the second example I will use the Top Stories API, to load the top science stories.
+
+```{r get-data-using-top-stories-api-science}
+
+url <- paste("https://api.nytimes.com/svc/topstories/v2/science.json?api-key=8Tuw2G2y7TwdrHs4sejvtQWjJ2E844o5")
+
+rawDataFromTopStoriesApi <- fromJSON(url,flatten = T)
+resultsDataFrameTopStories <- rawDataFromTopStoriesApi$results
+
+resultsDataFrameTopStories %>% 
+  select( title,section, short_url, abstract) %>% 
+  datatable()
+
+```
+
+### Display Results Graphically for Top Stories API per science
+
+I will now make a bar graph showing the number of articles per section.
+```{r ggplot-section-science}
+resultsDataFrameTopStories %>% ggplot(aes(x=section, fill = section)) + geom_bar()
+```
+
+### Using the Top Stories API per Technology
+
+For the third example I will use the Top Stories API, to load the top technology stories.
+
+```{r get-data-using-top-stories-api-technology}
+
+url <- paste("https://api.nytimes.com/svc/topstories/v2/technology.json?api-key=8Tuw2G2y7TwdrHs4sejvtQWjJ2E844o5")
+
+rawDataFromTopStoriesApiTechnology <- fromJSON(url,flatten = T)
+resultsDataFrameTopStoriesTechnology <- rawDataFromTopStoriesApiTechnology$results
+
+resultsDataFrameTopStories %>% 
+  select( title,section, short_url, abstract) %>% 
+  datatable()
+
+```
+
+### Display Results Graphically for Top Stories API per technology
+
+I will now make a bar graph showing the number of articles per section.
+```{r ggplot-section-technology}
+resultsDataFrameTopStoriesTechnology %>% ggplot(aes(x=section, fill = section)) + geom_bar()
+```
+
+## Conclusion
+
+As can be seen, it is quite useful and simple to access data using an API that returns JSON, I used three different API's and the results of these API are display above.
