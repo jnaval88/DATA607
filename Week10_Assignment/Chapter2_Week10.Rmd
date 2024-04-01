@@ -1,0 +1,400 @@
+---
+title: " Week 10 Assignment from Text Mining with R - Chapter 2"
+author: "James Naval"
+---
+
+## The primary example code from chapter 2 working in R with and Install libraries
+```{r global_options, include=FALSE}
+knitr::opts_chunk$set(eval = TRUE, message = FALSE, warning = FALSE)
+
+library(tidyverse)
+library(dplyr)
+library(tidytext)
+library(stringr)
+library(janeaustenr)
+library(ggplot2)
+library(gutenbergr)
+library(scales)
+library(textdata)
+```
+
+### Introduction 
+For this assignment we were asked to use In Text Mining with R, Chapter 2 looks at Sentiment Analysis. Use the primary example code from chapter 2 working in an R Markdown document. Also provide a citation to this base code. lasly we were asked to extend the code in two ways:
+
+Work with a different corpus of your choosing, and
+
+Incorporate at least one additional https://cran.r-project.org/web/packages/friends/index.html (possibly from another R package that you’ve found through research).
+
+## loading sentiments datasets
+```{r -sentiments}
+library(tidytext)
+
+sentiments
+```
+
+The three general-purpose lexicons are:
+
+• AFINN from Finn Årup Nielsen
+
+• Bing from Bing Liu and collaborators
+
+• NRC from Saif Mohammad and Peter Turney
+
+```{r -afinn}
+get_sentiments("afinn")
+```
+
+```{r -bing}
+get_sentiments("bing")
+
+```
+
+```{r -nrc}
+
+get_sentiments("nrc")
+```
+
+#2. Sentiment analysis of Jane Austen books
+```{r Jane-austen-data}
+library(janeaustenr)
+library(dplyr)
+library(stringr)
+
+tidy_books <- austen_books() %>%
+ group_by(book) %>%
+ mutate(linenumber = row_number(),
+ chapter = cumsum(str_detect(text, regex("^chapter [\\divxlc]",
+ ignore_case = TRUE)))) %>%
+ ungroup() %>%
+ unnest_tokens(word, text)
+
+tidy_books
+```
+
+#3. Sentiment analysis of positive words using NRC dictionary
+```{r}
+
+nrcjoy <- get_sentiments("nrc") %>%
+ filter(sentiment == "joy")
+tidy_books %>%
+ filter(book == "Emma") %>%
+ inner_join(nrcjoy) %>%
+ count(word, sort = TRUE)
+
+```
+
+#4. Sentiment analysis of positive and negative using Bing dictionary
+```{r}
+library(tidyr)
+
+janeaustensentiment <- tidy_books %>%
+ inner_join(get_sentiments("bing")) %>%
+ count(book, index = linenumber %/% 80, sentiment) %>%
+ spread(sentiment, n, fill = 0) %>%
+ mutate(sentiment = positive - negative)
+
+janeaustensentiment
+```
+
+#5. Plot of negative and positive words
+```{r}
+library(ggplot2)
+
+ggplot(janeaustensentiment, aes(index, sentiment, fill = book)) +
+ geom_col(show.legend = FALSE) +
+ facet_wrap(~book, ncol = 2, scales = "free_x")
+```
+
+#6. Filter for Pride and Prejudice
+```{r}
+pride_prejudice <- tidy_books %>%
+ filter(book == "Pride & Prejudice")
+pride_prejudice
+```
+
+#7. Comparing sentiment analysis of Pride and Prejudice by the 3 libraries, AFINN, BING, and NRC
+```{r}
+afinn <- pride_prejudice %>%
+ inner_join(get_sentiments("afinn")) %>%
+ group_by(index = linenumber %/% 80) %>%
+ summarise(sentiment = sum(value)) %>%
+ mutate(method = "AFINN")
+bing_and_nrc <- bind_rows(
+ pride_prejudice %>%
+ inner_join(get_sentiments("bing")) %>%
+ mutate(method = "Bing et al."),
+ pride_prejudice %>%
+ inner_join(get_sentiments("nrc") %>%
+ filter(sentiment %in% c("positive",
+ "negative"))) %>%
+ mutate(method = "NRC")) %>%
+   count(method, index = linenumber %/% 80, sentiment) %>%
+ spread(sentiment, n, fill = 0) %>%
+ mutate(sentiment = positive - negative)
+```
+
+#8. Plot of the 3 sentiment dictionaries
+```{r}
+bind_rows(afinn,
+ bing_and_nrc) %>%
+ ggplot(aes(index, sentiment, fill = method)) +
+ geom_col(show.legend = FALSE) +
+ facet_wrap(~method, ncol = 1, scales = "free_y")
+```
+
+```{r}
+get_sentiments("nrc") %>%
+ filter(sentiment %in% c("positive",
+ "negative")) %>%
+ count(sentiment)
+
+```
+
+```{r}
+get_sentiments("bing") %>%
+ count(sentiment)
+
+```
+
+#9. Most common negative and positive words
+```{r}
+bing_word_counts <- tidy_books %>%
+ inner_join(get_sentiments("bing")) %>%
+ count(word, sentiment, sort = TRUE) %>%
+ ungroup()
+bing_word_counts
+```
+
+#10. Plot of most common negative postive and negative words
+```{r}
+bing_word_counts %>%
+ group_by(sentiment) %>%
+ top_n(10) %>%
+ ungroup() %>%
+ mutate(word = reorder(word, n)) %>%
+ ggplot(aes(word, n, fill = sentiment)) +
+ geom_col(show.legend = FALSE) +
+ facet_wrap(~sentiment, scales = "free_y") +
+ labs(y = "Contribution to sentiment",
+ x = NULL) +
+ coord_flip()
+
+```
+
+
+```{r}
+custom_stop_words <- bind_rows(data_frame(word = c("miss"),
+ lexicon = c("custom")),
+ stop_words)
+custom_stop_words
+```
+
+#11. Word Cloud
+```{r}
+library(wordcloud)
+tidy_books %>%
+ anti_join(stop_words) %>%
+ count(word) %>%
+ with(wordcloud(word, n, max.words = 100))
+```
+
+
+```{r}
+library(reshape2)
+
+tidy_books %>%
+ inner_join(get_sentiments("bing")) %>%
+ count(word, sentiment, sort = TRUE) %>%
+ acast(word ~ sentiment, value.var = "n", fill = 0) %>%
+ comparison.cloud(colors = c("darkblue", "red"),
+ max.words = 100)
+```
+
+
+```{r}
+PandP_sentences <- data_frame(text = prideprejudice) %>%
+ unnest_tokens(sentence, text, token = "sentences")
+
+PandP_sentences$sentence[2]
+
+```
+
+
+```{r}
+austen_chapters <- austen_books() %>%
+ group_by(book) %>%
+ unnest_tokens(chapter, text, token = "regex",
+ pattern = "Chapter|CHAPTER [\\dIVXLC]") %>%
+ ungroup()
+austen_chapters %>%
+ group_by(book) %>%
+ summarise(chapters = n())
+
+```
+
+
+```{r}
+bingnegative <- get_sentiments("bing") %>%
+ filter(sentiment == "negative")
+wordcounts <- tidy_books %>%
+ group_by(book, chapter) %>%
+ summarize(words = n())
+tidy_books %>%
+ semi_join(bingnegative) %>%
+ group_by(book, chapter) %>%
+ summarize(negativewords = n()) %>%
+ left_join(wordcounts, by = c("book", "chapter")) %>%
+ mutate(ratio = negativewords/words) %>%
+ filter(chapter != 0) %>%
+ top_n(1) %>%
+ ungroup()
+```
+
+### Different corpus of your choosing
+
+For the corpus of my choosing I will be looking at sentiment analysis of the friends package from this URL: ("https://cran.r-project.org/web/packages/available_packages_by_name.html#available-packages-T"). The friends package contained the complete scripts from the American sitcom Friends in tibble format.I will be Use this package to practice data wrangling, text analysis and network analysis along sentiment analysis according to Chapter 2 from “Text Mining with R: A Tidy Approach”.
+
+First I will begin by Loading and inspect friends corpus 
+
+```{r -friends-library}
+library(friends)
+
+glimpse(friends)
+```
+For this part I will be looking at the friends and by looking at the seasons
+```{r -friends-dataset}
+tidy_friends <- friends %>%
+  group_by(season) %>%
+  mutate(
+    linenumber = row_number(),
+    chapter = cumsum(str_detect(text, 
+                                regex("^chapter [\\divxlc]", 
+                                      ignore_case = TRUE)))) %>%
+  ungroup() %>%
+  unnest_tokens(word, text)
+
+tidy_friends
+```
+## Sentiment analysis of positive words by Chandler Bing NRC dictionary
+```{r}
+
+nrcjoy <- get_sentiments("nrc") %>%
+ filter(sentiment == "joy")
+tidy_friends %>%
+ filter(speaker == "Chandler Bing") %>%
+ inner_join(nrcjoy) %>%
+ count(word, sort = TRUE)
+
+```
+
+Sentiment analysis of positive and negative using Bing dictionary
+```{r}
+library(tidyr)
+
+friends_sentiment <- tidy_friends %>%
+  inner_join(get_sentiments("bing")) %>%
+  count(speaker, index = linenumber %/% 80, sentiment) %>%
+  pivot_wider(names_from = sentiment, values_from = n, values_fill = 0) %>% 
+  mutate(sentiment = positive - negative)
+```
+
+## Filter for speaker Chandler Bing
+```{r}
+Chandler_Bing <- tidy_friends %>% 
+  filter(speaker == "Chandler Bing")
+
+Chandler_Bing
+```
+## Filter for speaker Phoebe Buffay
+```{r}
+Phoebe_Buffay <- tidy_friends %>% 
+  filter(speaker == "Phoebe Buffay")
+
+Phoebe_Buffay
+```
+Comparing sentiment analysis of Phoebe Buffay by the 3 libraries, AFINN, BING, and NRC
+```{r}
+afinn <- Phoebe_Buffay %>% 
+  inner_join(get_sentiments("afinn")) %>% 
+  group_by(index = linenumber %/% 80) %>% 
+  summarise(sentiment = sum(value)) %>% 
+  mutate(method = "AFINN")
+
+
+```
+
+```{r}
+bing_and_nrc_Friends <- bind_rows(
+  Phoebe_Buffay %>% 
+    inner_join(get_sentiments("bing")) %>%
+    mutate(method = "Bing et al."),
+  Phoebe_Buffay %>% 
+    inner_join(get_sentiments("nrc") %>% 
+                 filter(sentiment %in% c("positive", 
+                                         "negative"))
+    ) %>%
+    mutate(method = "NRC")) %>%
+  count(method, index = linenumber %/% 80, sentiment) %>%
+  pivot_wider(names_from = sentiment,
+              values_from = n,
+              values_fill = 0) %>% 
+  mutate(sentiment = positive - negative)
+```
+## Plot of the 3 sentiment dictionaries
+```{r}
+bind_rows(afinn, 
+          bing_and_nrc) %>%
+  ggplot(aes(index, sentiment, fill = method)) +
+  geom_col(show.legend = FALSE) +
+  facet_wrap(~method, ncol = 1, scales = "free_y")
+```
+
+## Most common negative and positive words
+```{r}
+bing_word_counts <- tidy_friends %>%
+  inner_join(get_sentiments("bing")) %>%
+  count(word, sentiment, sort = TRUE) %>%
+  ungroup()
+
+bing_word_counts
+```
+##  Plot of most common negative postive and negative words
+```{r}
+bing_word_counts %>%
+  group_by(sentiment) %>%
+  slice_max(n, n = 10) %>% 
+  ungroup() %>%
+  mutate(word = reorder(word, n)) %>%
+  ggplot(aes(n, word, fill = sentiment)) +
+  geom_col(show.legend = FALSE) +
+  facet_wrap(~sentiment, scales = "free_y") +
+  labs(x = "Contribution to sentiment",
+       y = NULL)
+```
+
+## Word Cloud
+```{r}
+library(wordcloud)
+
+tidy_friends %>%
+  anti_join(stop_words) %>%
+  count(word) %>%
+  with(wordcloud(word, n, max.words = 100))
+```
+
+```{r}
+library(reshape2)
+
+tidy_books %>%
+  inner_join(get_sentiments("bing")) %>%
+  count(word, sentiment, sort = TRUE) %>%
+  acast(word ~ sentiment, value.var = "n", fill = 0) %>%
+  comparison.cloud(colors = c("green", "purple"),
+                   max.words = 100)
+```
+
+### Citation
+Text Book:
+The base code used here is taken from: “Text Mining with R: A Tidy Approach” by Julia Silge and David Robinson licensed under a Creative Commons Attribution-NonCommercial-ShareAlike 3.0 United States License.
+
+Friends: https://cran.r-project.org/web/packages/friends/index.html.
