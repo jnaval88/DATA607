@@ -1,0 +1,67 @@
+---
+title: "Week 11 Assignment: Recommender System"
+author: " James Naval"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Your task is to analyze an existing recommender system that you find interesting. You should:
+
+1. Perform a Scenario Design analysis as described below.  Consider whether it makes sense for your selected recommender system to perform scenario design twice, once for the organization (e.g. Amazon.com) and once for the organization's customers.
+
+2. Attempt to reverse engineer what you can about the site, from the site interface and any available information that you can find on the Internet or elsewhere.
+
+3. Include specific recommendations about how to improve the site's recommendation capabilities going forward. 
+
+4. Create your report using an R Markdown file, and create a discussion thread with a link to the GitHub repo where your Markdown file notebook resides. You are not expected to need to write code for this discussion assignment.
+
+## Amazon Music Reccomendations {.tabset}
+What is Amazon music?
+
+Amazon Music is an online music streaming service and digital music store owned and operated by Amazon. The service has 55 million subscribers as of January 2020. Amazon Music was the first online music store to offer music without the digital rights management of the four major record labels and many independent labels.
+
+### Scenario Design Analysis
+
+1.  Who are Amazon Music's targeted users?
+
+The amazon music platform provide unlimited music to Android, iOS and on the web and the service is tightly integrated with Amazon's Alexa, so if you have an Echo or other Alexa-enabled products, it'll work perfectly. 
+
+2.  What are their key goals?
+
+The aim is to suggest music that the user wants to hear based on what they listen to and what their friends like. 
+
+3.  How can Amazon Music help them accomplish these goals?
+
+Since Amazon music have the musical library of the individual users, new music and the library of friends and family. With the help of Amazon recommendation algorithms, it is possible to recommend music that the user would like to listen to.
+
+
+### Reverse Engineer the Reccomender
+
+Although there are other ways to use Amazon Music's recommender system, asking an Alexa-enabled device to "help me find music" or "Alexa, recommend some music" is the simplest. After that, Alexa will answer with a series of inquiries or prompts that are meant to propose possible things for the user to do. These questions can be more directed, like "Something laid back? ", or more open-ended, like "Do you have anything in mind?" or more positive?
+
+Using the broad information that is acquired from the client through conversational exchanges, Alexa can then recommend a specific artist or provide a prompt with a sample of music from the millions of tracks that are accessible to Amazon Music members. As an illustration: "How about this? <plays a short musical excerpt> Was it enjoyable?
+
+### Recommendations About how to Improve the Site's Recommendation Capabilities
+
+In order to make new recommendation on site improvement, we might need to take a look at other music platform offers such as spotify.
+
+Amazon Music vs. Spotify: Special features:
+
+Apart from its remarkable Alexa compatibility, Amazon Music's other standout feature is something called X-Ray Lyrics. This useful function, which lets words scroll by nearly karaoke-style as the song plays, is especially useful for difficult-to-understand tunes. In order to make driving and listening simpler, Amazon also launched Car Mode, a less distracting interface. while Spotify's incredibly sophisticated algorithm is essentially what allows it to figure out what you enjoy listening to. While Spotify provides you with music you already know you like along with others that might not have made it to the charts but still appeal to you, Amazon might offer you the option to read lyrics. It's a great way to discover up-and-coming musicians, listen to old favorites, and broaden your musical tastes. You can also experiment with different playlists and Spotify's extra Discover Weekly feature to broaden your musical horizons without being constrained by standard top 40 radio mixes—though you are welcome to have those, too.
+
+Amazon Music vs. Spotify: App interface:
+
+Compared to its Amazon counterpart, Spotify's desktop software is nicer on the eyes and simpler to use. The Spotify desktop software is far superior to Amazon's, offering tools for playlists, offline downloads, and a system that elevates listening from home to the office to a professional level. Its mobile app is set out similarly, with simple functionality and a straightforward layout.
+
+## Conclusion
+
+Spotify vs. Amazon Music debate comes down to your listening preferences. Amazon Music is probably your best option if you currently use Amazon as a Prime member and enjoy the convenience of Alexa integration. Spotify is definitely the best service for you if you don't currently use Amazon services frequently, wish to find new music based on your taste and mood, or are choosing a completely free choice.
+
+## References
+
+Marcus Garcia, 2024. "Spotify Vs Amazon Music: Comparing Streaming Giants For The Ultimate Music Experience". https://gadgetmates.com/spotify-vs-amazon-music.
+
+Tara McCormack, 2023. "Amazon Music vs Spotify: And the Winner Is". https://blog.tunemymusic.com/amazon-music-vs-spotify/.
+
