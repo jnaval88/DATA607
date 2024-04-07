@@ -17,7 +17,11 @@ Your task is to analyze an existing recommender system that you find interesting
 
 4. Create your report using an R Markdown file, and create a discussion thread with a link to the GitHub repo where your Markdown file notebook resides. You are not expected to need to write code for this discussion assignment.
 
-## Amazon Music Reccomendations {.tabset}
+## Introduction {.tabset}
+
+For this assignment we have have asked to find an interesting recommender system and analyze. I choose to analyze Amazon music recommender then compare it to some competitor like spotify by looking at features and improvement that can be make.
+
+### Amazon Music Reccomendations
 What is Amazon music?
 
 Amazon Music is an online music streaming service and digital music store owned and operated by Amazon. The service has 55 million subscribers as of January 2020. Amazon Music was the first online music store to offer music without the digital rights management of the four major record labels and many independent labels.
