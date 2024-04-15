@@ -1,0 +1,75 @@
+---
+title: "DATA 607 Data Project Proposal"
+author: "James Naval"
+---
+
+### Data Preparation
+
+```{r setup, echo=TRUE, results='hide', warning=FALSE, message=FALSE}
+library(tidyverse)
+library(openintro)
+library(flextable)
+library(infer)
+library(psych)
+library(epiDisplay)
+library(summarytools)
+
+knitr::opts_chunk$set(tidy.opts=list(width.cutoff=50),tidy=TRUE,echo =TRUE)
+set_flextable_defaults(fonts_ignore=TRUE)
+
+projectid = "data-607-project"
+
+# load Data
+Citibike <- read.csv("202308-citibike-tripdata.csv")
+```
+
+```{r data-set count}
+Citibike %>%
+  dfSummary()
+```
+
+### Research question
+
+CitiBike have two different types of bikes (classic and electric) and memberships (members and casual). Compare and contrasting Casual bike riders and annual bike riders: Do they effect each other?
+
+### Cases
+
+Citibike data set contains 4,093,169 rows, which consist of individual rides. For this experiment I will use approximately 25% of the sample consisting of 1,023,292 cases, and I will set the confident interval at 0.95(95%).
+
+### Data collection
+
+Citibike provides downloadable csv files format of Citibike information in a publicly available database. The database itself was created on September, 2023 for the month of August, 2023 and was last updated on October 12, 2023. This citibike database contain more recent data until October 2023, and can be view or accessible at the [Citibike website] (https://citibikenyc.com/system-data).
+
+### Type of Study
+
+This is an observational study, since I will be using data set from citibike database.
+
+### Data Source
+
+For this assignment I will be using a random sample taken from https://s3.amazonaws.com/tripdata/index.html. This data come from the citi bike site https://citibikenyc.com/system-data
+
+### Dependent Variable
+
+The dependent variable is the type of bike being rented on a day to day, this is categorical and qualitative.
+
+### Independent Variable
+
+The independent variable is the type of members that are rented the bikes, this is qualitative.
+
+### Relevant summary statistics 
+
+```{r, warning=FALSE, message=FALSE, fig.width=5, fig.height=3}
+ggplot(Citibike, aes(x = rideable_type)) + geom_bar()
+```
+
+```{r prop-table-Rideable_type}
+tab1(Citibike$rideable_type,sort.group = "decreasing", cum.percent = F ) 
+```
+
+```{r, warning=FALSE, message=FALSE, fig.width=5, fig.height=3}
+ggplot(Citibike, aes(x = member_casual)) + geom_bar()
+```
+
+```{r prop-table-type of member}
+tab1(Citibike$member_casual,sort.group = "decreasing", cum.percent = F ) 
+```
