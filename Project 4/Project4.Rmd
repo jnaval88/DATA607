@@ -1,0 +1,174 @@
+---
+title: "Project 4"
+author: "James Naval"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(SnowballC)
+library(rvest)
+library(wordcloud)
+library(reactable)
+```
+
+## Introduction
+
+For this assignment we have given two sets of email messages. One set is known to be spam and another set is known to be "ham", a legitimate message. I have downloaded two files from the example corpus https://spamassassin.apache.org/old/publiccorpus/ ^[@old_publiccorpus_2004]. I have downloaded the files named `20021010_easy_ham.tar.bz2` and `20021010_spam.tar.bz2` containing sample ham and spam messages respectively. I have also made my chosen files available on [github](https://github.com/jnaval88/DATA607/tree/53b22c38af9ced5aee64ee49e1a199f760fe36c8/Project%204/Corpus). 
+
+## Data Import  {.tabset}
+
+### Download and Unzip Files
+
+For this section I will download and unzip both using the URL.
+```{r, eval=F}
+hamURL <- 'https://spamassassin.apache.org/old/publiccorpus/20021010_easy_ham.tar.bz2'
+
+spamURL <- 'https://spamassassin.apache.org/old/publiccorpus/20021010_easy_ham.tar.bz2'
+
+download.file(hamURL,"corpus/20021010_easy_ham.tar.bz2")
+download.file(spamURL,"corpus/20021010_spam.tar.bz2")
+
+untar("corpus/20021010_easy_ham.tar.bz2", exdir = "corpus/")
+untar("corpus/20021010_spam.tar.bz2", exdir = "corpus/")
+```
+
+### Import Data from Files and Export to Data Frame
+
+ I will be using the Text Mining Package `tm`, in R to import the spam and ham data sets and to do some analysis. Then imported the data sets as `Corpus` objects. I have converted these `Corpus` objects to data frames in order to manipulate the data. 
+
+```{r message=FALSE}
+library(tm)
+
+spamCorpus <- Corpus(DirSource(directory = "corpus", encoding = "ASCII"))
+hamCorpus <- Corpus(DirSource(directory = "corpus/easy_ham/",encoding = "ASCII"))
+
+spam <- data.frame(text = sapply(spamCorpus, as.character), stringsAsFactors = FALSE)
+ham <- data.frame(text = sapply(hamCorpus, as.character), stringsAsFactors = FALSE)
+```
+
+### Combine Data Sets
+
+I will be combining the data sets.
+
+```{r}
+
+spam <- spam %>% 
+  rownames_to_column("message-id") %>% 
+  rename( message=text ) %>% 
+  mutate ( isSpam = 1)
+
+ham <- ham %>% 
+  rownames_to_column("message-id") %>% 
+  rename( message=text ) %>% 
+  mutate ( isSpam = 0)
+```
+
+The body of a mail message comes after the header and consists of everything that follows the first blank line. ^[@costales_2002]. As a result I will split the message column by a field containing two consecutive new line characters.
+
+```{r, warning=F}
+combinedDataSet <- rbind(spam,ham) %>% 
+  separate(message,sep = "(\r\n|\r|\n)(\r\n|\r|\n)", into = c("headers","body"), extra = "merge")
+```
+
+### Separate Useful Information into Columns
+
+I will now strip any HTML tags from the message, using a regular expression. 
+
+```{r}
+combinedDataSet <- combinedDataSet %>% 
+  mutate( body_plaintext = str_replace_all(body,"</?[^>]+>","") )
+
+```
+
+I would also look at the originating IP address from the header using IPV4. The regex below was adapted from the following [website](https://www.bigdatamark.com/regexp-for-extracting-public-ip-address/)^[@mark_2016]. It will exclude any private and loopback IP addresses. The `str_extract` function on the headers with this regex should give us the first public IP address that the message passed through.
+
+
+```{r}
+regex <-"\\b(?!(10)|(127)|192\\.168|172\\.(2[0-9]|1[6-9]|3[0-2]))[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}" 
+
+combinedDataSet <- combinedDataSet %>% 
+  mutate( originatingIP = str_extract(headers,regex)  )
+```
+
+<!--There is some interesting information that can be obtained from the originating IP address of the message. I will extract that information from the ipgeolocation.io API.  -->
+
+### Resultant DataFrame
+The data frame now looks like this:
+```{r}
+combinedDataSet %>% 
+  head(30) %>% 
+  reactable(wrap = F)
+```
+
+## Creating Corpus{.tabset}
+
+### Create Corpus
+
+We will now create the corpus based on the data frame created in the previous steps.
+```{r}
+combinedDataFrameSource <- combinedDataSet %>% 
+  select( `message-id`,body_plaintext) %>% 
+  rename(`doc_id`= `message-id`, text = body_plaintext ) %>% 
+  DataframeSource()
+
+spamCorpus <-Corpus(combinedDataFrameSource)
+```
+
+### Data Pre-Processing
+
+I will perform some pre-processing on the raw data.
+
+```{r warning=FALSE}
+spamCorpus <- spamCorpus %>% 
+  tm_map(content_transformer(tolower))%>% 
+  tm_map(removeNumbers) %>% 
+  tm_map(removePunctuation) %>% 
+  tm_map(stripWhitespace) %>% 
+  tm_map(removeWords, stopwords("SMART")) %>% 
+  tm_map(removeWords, c("nbsp","email")) %>% 
+  tm_map(stemDocument) 
+
+```
+
+### Example of One Document
+
+Here is an example of a stemmed document
+
+```{r}
+writeLines(as.character(spamCorpus[[20]])) 
+```
+
+### Create Document Matrix
+
+I will now create a `DocumentTermMatrix`. 
+
+```{r}
+spamDTM <- DocumentTermMatrix(spamCorpus) %>% removeSparseTerms(sparse = .99)
+
+```
+
+### Create Word Cloud - Spam
+
+I will now create a word cloud containing the frequency of common words in the spam. 
+
+```{r warning=FALSE}
+spamIndex <- which( combinedDataSet$isSpam == 1 )
+wordcloud( spamCorpus[spamIndex], min.freq = 200 )
+```
+
+### Create Word Cloud - Ham
+
+I will now create a word cloud containing the frequency of common words in the Ham. 
+
+```{r warning=FALSE}
+spamIndex <- which( combinedDataSet$isSpam == 0 )
+wordcloud( spamCorpus[spamIndex], min.freq = 200)
+
+```
+
+## Conclusion
+
+I was able to import spam_ham data set as corpus in order to manipulate the data, split it into two different data set in order to remove any html tags from the message. Then rebinds it, I was also to used regex to look at the messages base on actual ip address. Finally, create two different world cloud frequency base on the most commmon words used.
+
+## References
