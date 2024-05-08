@@ -297,7 +297,7 @@ ggbarstats(
 From the output and from Chi_result$p.value we see that the p-value is less than the significance level of 5%. Like any other statistical test, if the p-value is less than the significance level, we can reject the null hypothesis.
 ⇒In our context, rejecting the null hypothesis for the Chi-square test of independence means that there is a significant relationship between the type of bikes and membership type. Therefore, knowing the value of one variable helps to predict the value of the other variable.
 
-Even though the data show shows there's a higher percentage of classic bike rented by annual compare to casual subscribers, but I'm not sure that's really the case because they could be a lot of factor that affect this data, for Example the data are report by months. The data set that was using was for the month of February 2024 only maybe that percentage could be that month only. As with the previous tests, we reject the null hypothesis and we conclude that species and size are dependent (p-value < 0.001).
+Even though the data show shows there's a higher percentage of classic bike rented by annual compare to casual subscribers, but I'm not sure that's really the case because they could be a lot of factor that affect this data, for Example the data are report by months. The data set that was using was for the month of February 2024 only maybe that percentage could be that month only. As with the previous tests, we reject the null hypothesis and we conclude that bike type and member type are dependent (p-value < 0.001).
 
 
 ## References
